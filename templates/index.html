@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Barad-DF Radio Direction Finding</title>
+
+    <style>
+        body {
+            background-color: #141517;
+            font-family: Courier, monospace;
+            color: #FF8C00;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .logo {
+            display: block;
+            width: 50%;
+            max-width: 100px;
+            min-width: 50px;
+            height: auto;
+            margin: 20px auto;
+        }
+
+        h1,
+        h2 {
+            text-align: center;
+        }
+
+        .panel {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #FF8C00;
+            border-radius: 8px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"] {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            background-color: #222428;
+            color: #FF8C00;
+            border: 1px solid #FF8C00;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #222428;
+            color: #FF8C00;
+            border: 1px solid #FF8C00;
+            border-radius: 4px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #FF8C00;
+            color: #141517;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 15px;
+        }
+
+        .status-card {
+            padding: 18px 10px;
+            background-color: #222428;
+            border: 1px solid #FF8C00;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .status-label {
+            display: block;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+
+        .status-value {
+            display: block;
+            font-size: 1.3rem;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .unit {
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 400px) {
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <img class="logo" src="{{ url_for('static', filename='logo.jpg') }}" alt="Barad-DF logo">
+
+    <h1>Radio Direction Finding</h1>
+
+    <section class="panel">
+        <h2>Direction Finding Control</h2>
+
+        <form action="/set-frequency" method="POST">
+            <label for="frequency">Target Frequency (MHz)</label>
+
+            <input type="text" id="frequency" name="frequency_mhz" inputmode="decimal" pattern="[0-9]+(\.[0-9]{1,6})?"
+                placeholder="e.g. 146.520000" value="{{ '%.6f'|format(selected_frequency / 1e6) }}" required>
+
+            <button type="submit">Set Frequency</button>
+
+
+            <div class="rssi-filter">
+                <label for="rssi_threshold">
+                    Minimum RSSI Threshold:
+                    <span id="rssi_value">-90 dBFS</span>
+                </label>
+
+                <input type="range" id="rssi_threshold" name="rssi_threshold_dbfs" min="-120" max="-30" step="1"
+                    value="{{ rssi_threshold_dbfs }}">
+
+                <div class="slider-labels">
+                    <span>-120 dBFS</span>
+                    <span>-30 dBFS</span>
+                </div>
+
+                <p class="help-text">
+                    Signals weaker than this threshold will be filtered out.
+                </p>
+            </div>
+
+            <script>
+                const rssiSlider = document.getElementById("rssi_threshold");
+                const rssiValue = document.getElementById("rssi_value");
+
+                function updateRssiLabel() {
+                    rssiValue.textContent = `${rssiSlider.value} dBFS`;
+                }
+
+                rssiSlider.addEventListener("input", updateRssiLabel);
+                updateRssiLabel();
+            </script>
+
+        </form>
+    </section>
+
+    <section class="panel">
+        <h2>Receiver Status</h2>
+
+        <div class="status-grid">
+            <div class="status-card">
+                <span class="status-label">Line of Bearing (LOB)</span>
+
+                <span class="status-value">
+                    {% if lob_deg is defined and lob_deg is not none %}
+                    {{ "%.1f"|format(lob_deg) }}°
+                    {% else %}
+                    --°
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="status-card">
+                <span class="status-label">Signal Strength (RSSI)</span>
+
+                <span class="status-value">
+                    {% if rssi_dbm is defined and rssi_dbm is not none %}
+                    {{ "%.1f"|format(rssi_dbm) }}
+                    <span class="unit">dBFS</span>
+                    {% else %}
+                    -- dBFS
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </section>
+</body>
+
+</html>
