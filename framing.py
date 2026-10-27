@@ -83,6 +83,5 @@ def measure(iq, slot_len, fs, guard=0):
     frames = slice_frames(iq, frame_start, slot_len, slots_per_frame=5)
     cfo = estimate_cfo(frames, fs)
     phases, signal_power, blank_power = measure_frames(frames, fs, cfo, guard)
-    return dict(phases=phases, cfo_hz=cfo, signal_power=signal_power,
-                blank_power=blank_power, frame_start=frame_start,
-                n_frames=frames.shape[0])
+    contrast_db = 10 * np.log10(signal_power / blank_power)
+    return dict(phases=phases, cfo_hz=cfo, signal_power=signal_power, blank_power=blank_power, frame_start=frame_start, contrast_db=contrast_db, n_frames=frames.shape[0])

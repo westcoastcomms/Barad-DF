@@ -46,4 +46,8 @@ def bearing_from_phases(phases):
 
 
 bearing_deg = None
-# last_rssi = None
+
+
+def expected_magnitude(freq_hz):
+    expected_magnitude = 4 * np.pi * array_radius / wavelength
+    return expected_magnitude
