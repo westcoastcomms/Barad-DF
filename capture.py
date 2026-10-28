@@ -1,30 +1,28 @@
-# Barad-DF Raw IQ Framing Feature
-import numpy
-import webapp
+# Barad-DF Raw IQ Capture
 from rtlsdr import RtlSdr
 
 
-def open_sdr(freq_hz, fs=250e3):
+def open_sdr(freq_hz, fs=250e3, gain_db=29.7):
     # Configure SDR basic parameters
     sdr = RtlSdr()
-    sdr.sample_rate = 1.024e6  # Hz
-    sdr.center_freq = webapp.selected_frequency  # Hz
-    sdr.freq_correction = 60  # PPM
-    sdr.gain_mode = True
-    sdr.gain = 29.7  # set slider range between 20.0-40.2
-    # read and throw away one block (frst samples after)
+    sdr.sample_rate = fs  # Hz
+    sdr.center_freq = freq_hz  # Hz
+    sdr.set_agc_mode(False)
+    sdr.gain = gain_db  # set slider range between 20.0-40.2
+    sdr.read_samples(2**14)
+    return sdr
 
 
 def read_iq(sdr, n_samples=2**16):
     # Return n_samples complex samples as 1-d numpy array
-    iq =
-    return iq
+    sdr.read_samples(n_samples)
+    return sdr.read_samples(n_samples)
 
 
 def close_sdr(sdr):
     # Release the dongle
-    return
+    sdr.close()
 
 
 # Set antenna switching rate
-antenna_switching_rate = 1000  # Hz
+# antenna_switching_rate = 1000  # Hz
