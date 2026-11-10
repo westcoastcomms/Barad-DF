@@ -9,7 +9,7 @@ antenna_angles_deg = np.array([45, 135, 225, 315], dtype=float)
 antenna_angles = np.deg2rad(antenna_angles_deg)
 
 c = 299792458
-freq_hz = 146520e3        # webapp.selected_frequency
+# freq_hz = 146520e3         webapp.selected_frequency
 SIGN = 1  # +1 normal, -1 if the array reads mirrored
 OFFSET_DEG = 0.0  # fixed correction in degrees, set during calibration
 
@@ -45,9 +45,5 @@ def bearing_from_phases(phases):
     return bearing_deg, magnitude
 
 
-bearing_deg = None
-
-
 def expected_magnitude(freq_hz):
-    expected_magnitude = 4 * np.pi * array_radius / wavelength
-    return expected_magnitude
+    return 4 * np.pi * array_radius(freq_hz) / wavelength(freq_hz)
