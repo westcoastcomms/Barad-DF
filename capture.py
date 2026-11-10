@@ -25,4 +25,4 @@ def close_sdr(sdr):
 
 
 # Set antenna switching rate
-# antenna_switching_rate = 1000  # Hz
+# antenna_switching_rate = 1024  # Hz

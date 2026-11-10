@@ -9,4 +9,7 @@ def decimate_iq(iq, factor=8, trim=20):
     return decimated
 
 
-def channel_filter(iq, fs, bw_hz):  # Low-pass filter setting for narrowband channels
+def channel_filter(iq, fs, bw_hz, n_taps=129):
+    """Low-pass filter a complex IQ block to a channel bw_hz wide, centred on 0 Hz."""
+    taps = signal.firwin(n_taps, bw_hz / 2, fs=fs)
+    return np.convolve(iq, taps, mode="valid")
