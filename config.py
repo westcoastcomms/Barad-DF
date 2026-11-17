@@ -5,22 +5,31 @@ BACKEND = "rtlsdr"              # later: "hackrf"
 CAPTURE_FS = 2.0e6              # Hz, raw rate from the SDR
 DECIMATION = 8
 FS = CAPTURE_FS / DECIMATION    # Hz after decimation
+DEFAULT_FREQ_HZ = 146.52e6         # Hz, default frequency to tune to
 # full antenna cycles per second (depends on the Opera Cake's speed)
 ROTATION_HZ = 1000
 SLOTS_PER_FRAME = 5             # 4 antennas + 1 blank (terminated) slot
-SLOT_LEN = int(FS / (ROTATION_HZ * SLOTS_PER_FRAME))
+_slot = FS / (ROTATION_HZ * SLOTS_PER_FRAME)
+assert abs(_slot - round(_slot)
+           ) < 1e-9, f"slot length {_slot} is not a whole number of samples"
+SLOT_LEN = int(round(_slot))
 # samples per slot; must come out a whole number
 FRAMES_PER_BLOCK = 250
+# raw samples per frame (2000 at 2.0 MS/s, 1000 Hz)
+FRAME_RAW = SLOT_LEN * SLOTS_PER_FRAME * DECIMATION
 
 # --- Capture ---
 GAIN_DB = 49.6
 # See band dicts for tuning offset tune this far off the signal to dodge the DC spike (0 on a HackRF Pro)
 
 
-# --- Antenna Array & Switch ---
+# --- Antenna Array & Switching Sequence ---
 # B1 holds the 50 ohm terminator (blank slot)
 ANTENNA_SWITCH_SEQUENCE = {"A1": 45, "A2": 135,
                            "A3": 225, "A4": 315, "B1": None}
+assert len(ANTENNA_SWITCH_SEQUENCE) == SLOTS_PER_FRAME
+ANTENNA_ANGLES_DEG = [
+    a for a in ANTENNA_SWITCH_SEQUENCE.values() if a is not None]
 
 # --- Frequency Bands ---
 BANDS = [
