@@ -61,9 +61,11 @@ def derotate(frames, f, fs):
 def measure_frames(frames, fs, cfo_hz, guard=0):
     """-> phases (4,), signal_power, blank_power"""
     derotated = derotate(frames, cfo_hz, fs)
+    slot_len = frames.shape[2]
+    lo, hi = guard, slot_len - guard  # skip the edges of every slot
 
     # one complex number per antenna slot per frame, shape (n_frames, 4)
-    slot_values = derotated[:, :4, guard:].mean(axis=2)
+    slot_values = derotated[:, :4, lo:hi].mean(axis=2)
 
     # remove each frame's shared phase so the four phases sit near zero
     ref = np.angle(slot_values.sum(axis=1, keepdims=True))
@@ -72,15 +74,16 @@ def measure_frames(frames, fs, cfo_hz, guard=0):
     # phase of each antenna, averaged over the frames
     phases = np.angle(referenced).mean(axis=0)
 
-    signal_power = np.mean(np.abs(derotated[:, :4, guard:]) ** 2)
-    blank_power = np.mean(np.abs(derotated[:, 4, :]) ** 2)
+    signal_power = np.mean(np.abs(derotated[:, :4, lo:hi]) ** 2)
+    blank_power = np.mean(np.abs(derotated[:, 4, lo:hi]) ** 2)
     return phases, signal_power, blank_power
 
 
 def measure(iq, slot_len, fs, guard=0):
     """Raw IQ stream -> dict with phases, cfo_hz, signal_power, blank_power, frame_start, n_frames"""
     frame_start = find_frame_start(iq, slot_len, slots_per_frame=5)
-    frames = slice_frames(iq, frame_start, slot_len, slots_per_frame=5)
+    # or without the last argument, as in measure_jump
+    frames = tracked_frames(iq, slot_len)
     cfo = estimate_cfo(frames, fs)
     phases, signal_power, blank_power = measure_frames(frames, fs, cfo, guard)
     contrast_db = 10 * np.log10(signal_power / blank_power)
@@ -111,8 +114,23 @@ def jump_phases(frames, g=0, m=1):
 def measure_jump(iq, slot_len, fs, g=0, m=1):
     """Same job as measure(), using the jump estimator. fs is unused but kept so the two are interchangeable."""
     frame_start = find_frame_start(iq, slot_len)
-    frames = slice_frames(iq, frame_start, slot_len)
+    # or without the last argument, as in measure_jump
+    frames = tracked_frames(iq, slot_len)
     return dict(phases=jump_phases(frames, g, m),
                 signal_power=np.mean(np.abs(frames[:, :4]) ** 2),
                 blank_power=np.mean(np.abs(frames[:, 4]) ** 2),
                 frame_start=frame_start, n_frames=frames.shape[0])
+
+
+def tracked_frames(iq, slot_len, slots_per_frame=5, chunk_frames=25):
+    """Frames from a long block, re-syncing every chunk so a small clock mismatch cannot slide the slots."""
+    frame_len = slot_len * slots_per_frame
+    chunk = chunk_frames * frame_len                         # samples per chunk
+    pieces = []
+    for i in range(0, len(iq) - chunk + 1, chunk):           # whole chunks only
+        part = iq[i:i + chunk]
+        pieces.append(slice_frames(part, find_frame_start(
+            part, slot_len, slots_per_frame), slot_len, slots_per_frame))
+    if not pieces:                                           # block shorter than one chunk: single sync
+        return slice_frames(iq, find_frame_start(iq, slot_len, slots_per_frame), slot_len, slots_per_frame)
+    return np.concatenate(pieces, axis=0)

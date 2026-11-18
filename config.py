@@ -17,6 +17,8 @@ SLOT_LEN = int(round(_slot))
 FRAMES_PER_BLOCK = 250
 # raw samples per frame (2000 at 2.0 MS/s, 1000 Hz)
 FRAME_RAW = SLOT_LEN * SLOTS_PER_FRAME * DECIMATION
+SMOOTHING_N = 8
+STALE_SECONDS = 10
 
 # --- Capture ---
 GAIN_DB = 49.6
