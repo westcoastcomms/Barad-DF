@@ -1,6 +1,5 @@
 # Barad-DF Main Loop
-from unittest import result
-
+import webapp
 import config
 import threading
 import math
@@ -9,7 +8,7 @@ from smoother import BearingSmoother
 from capture import open_sdr, read_iq, close_sdr
 from dsp import front_end
 from pipeline import analyze
-import smoother
+from shared import state, state_lock
 
 
 def process_block(raw_iq, freq_hz):
@@ -22,10 +21,6 @@ def process_block(raw_iq, freq_hz):
                    min_contrast_db=band["min_contrast_db"])
 
 
-state = {"freq_hz": config.DEFAULT_FREQ_HZ, "result": None}
-state_lock = threading.Lock()
-
-
 def run_loop(max_blocks=None):
     n = (config.FRAMES_PER_BLOCK + 1) * config.FRAME_RAW
     block_size = math.ceil(n / 256) * 256
@@ -36,9 +31,9 @@ def run_loop(max_blocks=None):
         while max_blocks is None or count < max_blocks:
             with state_lock:
                 freq_hz = state["freq_hz"]
+                threshold = state["rssi_threshold_dbfs"]
             band = config.get_band(freq_hz)
             tune_hz = freq_hz + band["tune_offset_hz"]
-            # old bearings belong to the old frequency
             smoother.reset()
             if sdr is None:
                 sdr = open_sdr(tune_hz, fs=config.CAPTURE_FS)
@@ -49,6 +44,8 @@ def run_loop(max_blocks=None):
                 # discard: the first samples after a retune are unreliable
                 read_iq(sdr, 2**14)
                 tuned_freq = freq_hz
+                smoother.reset()  # old bearings belong to the old frequency
+                last_valid = None
             try:
                 raw = read_iq(sdr, block_size)
             except OSError:
@@ -56,22 +53,20 @@ def run_loop(max_blocks=None):
                 sdr = None                       # reopened at the top of the next pass
                 continue
             result = process_block(raw, freq_hz)
+            if result["valid"] and result["rssi_db"] < threshold:
+                result["valid"] = False
+                result["reason"] = "below RSSI threshold"
             if result["valid"]:
                 smoother.add(result["bearing_deg"])
                 last_valid = time.time()
             elif last_valid is not None and time.time() - last_valid > config.STALE_SECONDS:
                 # no valid result for a while: drop the old bearing
                 smoother.reset()
+                last_valid = None
             result["smoothed_bearing_deg"] = smoother.value()
             result["bearing_std_deg"] = smoother.std_deg()
             with state_lock:
                 state["result"] = result
-            if result["valid"]:
-                print(
-                    f"{result['bearing_deg']:6.1f} deg  rssi {result['rssi_db']:6.1f} dB  {result['method']}  contrast {result['contrast_db']:.1f} dB")
-            else:
-                print(
-                    f"{result['reason']}  contrast {result['contrast_db']:.1f} dB")
             count += 1
     finally:
         if sdr is not None:
@@ -79,4 +74,5 @@ def run_loop(max_blocks=None):
 
 
 if __name__ == "__main__":
+    threading.Thread(target=webapp.run_server, daemon=True).start()
     run_loop()

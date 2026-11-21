@@ -19,6 +19,7 @@ FRAMES_PER_BLOCK = 250
 FRAME_RAW = SLOT_LEN * SLOTS_PER_FRAME * DECIMATION
 SMOOTHING_N = 8
 STALE_SECONDS = 10
+DEFAULT_RSSI_THRESHOLD_DBFS = -90
 
 # --- Capture ---
 GAIN_DB = 49.6
@@ -59,6 +60,7 @@ def get_band(freq_hz):
 SLOT_TOL = 0.10
 
 # --- Output ---
+WEB_HOST = "127.0.0.1"
 WEB_PORT = 8080
 COT_ADDRESS = "239.2.3.1"       # placeholder: check against ATAK's network settings
 COT_PORT = 6969                 # placeholder
