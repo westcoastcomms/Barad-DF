@@ -2,6 +2,7 @@
 import webapp
 import config
 import threading
+import cot_output
 import math
 import time
 from smoother import BearingSmoother
@@ -75,4 +76,6 @@ def run_loop(max_blocks=None):
 
 if __name__ == "__main__":
     threading.Thread(target=webapp.run_server, daemon=True).start()
+    if config.COT_ENABLED:
+        threading.Thread(target=cot_output.run_cot_loop)
     run_loop()

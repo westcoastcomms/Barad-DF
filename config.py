@@ -59,8 +59,19 @@ def get_band(freq_hz):
 # --- Gate ---
 SLOT_TOL = 0.10
 
-# --- Output ---
+# --- Web / CoT Output ---
 WEB_HOST = "127.0.0.1"
 WEB_PORT = 8080
 COT_ADDRESS = "239.2.3.1"       # placeholder: check against ATAK's network settings
 COT_PORT = 6969                 # placeholder
+COT_ENABLED = True
+# IP of the network interface to send multicast from (None = the default route)
+COT_INTERFACE_IP = None
+COT_PERIOD_S = 1.0
+COT_STALE_S = 10
+COT_CALLSIGN = "Barad-DF"
+COT_UID_PREFIX = "Barad-DF-1"
+LOB_LENGTH_M = 5000
+ARRAY_HEADING_DEG = 0.0         # true bearing of the array's 0 degree reference
+GPSD_HOST = "127.0.0.1"
+GPSD_PORT = 2947
