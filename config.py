@@ -56,7 +56,11 @@ def get_band(freq_hz):
     raise ValueError(f"Frequency {freq_hz} is outside every band")
 
 
-# --- Gate ---
+# --- Bearing Calibration and Gate Defaults ---
+BEARING_SIGN = 1                # +1 normal, -1 if the array reads mirrored
+BEARING_OFFSET_DEG = 0.0        # fixed correction in degrees, set during calibration
+# floor for direct callers of analyze(); the live system passes each band's own
+DEFAULT_MIN_CONTRAST_DB = 6.0
 SLOT_TOL = 0.10
 
 # --- Web / CoT Output ---

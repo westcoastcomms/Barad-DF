@@ -1,4 +1,5 @@
 # Barad-DF IQ Simulator
+import config
 import numpy as np
 from bearing import antenna_angles, array_radius, wavelength
 
@@ -12,8 +13,8 @@ def generate_phases(true_bearing_deg, freq_hz):
     return phases
 
 
-def simulate_iq(true_bearing_deg, freq_hz, n_frames=20, fs=250e3,
-                frame_rate=1000, snr_db=None, common_phase=0.0, seed=None,
+def simulate_iq(true_bearing_deg, freq_hz, n_frames=20, fs=config.FS,
+                frame_rate=config.ROTATION_HZ, snr_db=None, common_phase=0.0, seed=None,
                 freq_offset_hz=0.0, static_offsets_rad=None):
     slot_len = int(round(fs / (frame_rate * 5)))
     phases = generate_phases(true_bearing_deg, freq_hz) + common_phase

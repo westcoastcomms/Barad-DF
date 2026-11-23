@@ -1,8 +1,9 @@
 # Barad-DF Raw IQ Capture
+import config
 from rtlsdr import RtlSdr
 
 
-def open_sdr(freq_hz, fs=2.048e6, gain_db=29.7):
+def open_sdr(freq_hz, fs=config.CAPTURE_FS, gain_db=29.7):
     # Configure SDR basic parameters
     sdr = RtlSdr()
     sdr.sample_rate = fs  # Hz
